@@ -1,0 +1,80 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 5.6 (swiftlang-5.6.0.323.62 clang-1316.0.20.8)
+// swift-module-flags: -target x86_64-apple-ios11.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name VCCrypto
+import CommonCrypto
+import Foundation
+import Secp256k1
+import Swift
+@_exported import VCCrypto
+import _Concurrency
+public struct Sha512 {
+  public init()
+  public func hash(data: Foundation.Data) -> Foundation.Data
+}
+public protocol SecretStoring {
+  func getSecret(id: Foundation.UUID, itemTypeCode: Swift.String, accessGroup: Swift.String?) throws -> Foundation.Data
+  func saveSecret(id: Foundation.UUID, itemTypeCode: Swift.String, accessGroup: Swift.String?, value: inout Foundation.Data) throws
+  func deleteSecret(id: Foundation.UUID, itemTypeCode: Swift.String, accessGroup: Swift.String?) throws
+}
+public protocol CryptoOperating {
+  func generateKey() throws -> VCCrypto.VCCryptoSecret
+  func retrieveKeyFromStorage(withId id: Foundation.UUID) -> VCCrypto.VCCryptoSecret
+}
+public struct CryptoOperations : VCCrypto.CryptoOperating {
+  public init(sdkConfiguration: VCCrypto.VCSDKConfigurable)
+  public init(secretStore: VCCrypto.SecretStoring, sdkConfiguration: VCCrypto.VCSDKConfigurable)
+  public func generateKey() throws -> VCCrypto.VCCryptoSecret
+  public func retrieveKeyFromStorage(withId id: Foundation.UUID) -> VCCrypto.VCCryptoSecret
+}
+extension Foundation.Data {
+  public init?(base64URLEncoded base64URLString: Swift.String)
+  public func base64URLEncodedString() -> Swift.String
+}
+public enum KeychainStoreError : Swift.Error {
+  case deleteFromStoreError(status: Darwin.OSStatus)
+  case saveToStoreError(status: Swift.Int32)
+  case itemNotFound
+  case readFromStoreError(status: Darwin.OSStatus)
+  case invalidItemInStore
+  case itemAlreadyInStore
+  case invalidType
+}
+extension Foundation.Data {
+  public init(hexString: Swift.String)
+  public func toHexString() -> Swift.String
+}
+public struct HmacSha512 {
+  public func authenticate(message: Foundation.Data, withSecret secret: VCCrypto.VCCryptoSecret) throws -> Foundation.Data
+  public func isValidAuthenticationCode(_ mac: Foundation.Data, authenticating message: Foundation.Data, withSecret secret: VCCrypto.VCCryptoSecret) throws -> Swift.Bool
+}
+public protocol VCSDKConfigurable {
+  var accessGroupIdentifier: Swift.String? { get }
+}
+public struct Sha256 {
+  public init()
+  public func hash(data: Foundation.Data) -> Foundation.Data
+}
+public protocol VCCryptoSecret {
+  var id: Foundation.UUID { get }
+  var accessGroup: Swift.String? { get }
+  func isValidKey() -> Swift.Bool
+  func migrateKey(fromAccessGroup currentAccessGroup: Swift.String?) throws
+}
+public struct Secp256k1 : VCCrypto.Signing {
+  public init()
+  public func sign(messageHash: Foundation.Data, withSecret secret: VCCrypto.VCCryptoSecret) throws -> Foundation.Data
+  public func isValidSignature(signature: Foundation.Data, forMessageHash messageHash: Foundation.Data, usingPublicKey publicKey: VCCrypto.Secp256k1PublicKey) throws -> Swift.Bool
+  public func createPublicKey(forSecret secret: VCCrypto.VCCryptoSecret) throws -> VCCrypto.Secp256k1PublicKey
+}
+public class Secp256k1PublicKey {
+  final public let x: Foundation.Data
+  final public let y: Foundation.Data
+  public init?(uncompressedPublicKey: Foundation.Data)
+  public init?(x: Foundation.Data, y: Foundation.Data)
+  @objc deinit
+}
+public protocol Signing {
+  func sign(messageHash: Foundation.Data, withSecret secret: VCCrypto.VCCryptoSecret) throws -> Foundation.Data
+  func isValidSignature(signature: Foundation.Data, forMessageHash messageHash: Foundation.Data, usingPublicKey publicKey: VCCrypto.Secp256k1PublicKey) throws -> Swift.Bool
+  func createPublicKey(forSecret secret: VCCrypto.VCCryptoSecret) throws -> VCCrypto.Secp256k1PublicKey
+}
